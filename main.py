@@ -5,6 +5,7 @@ import os
 import importlib.util
 import folder_paths
 import time
+import glob
 
 def execute_prestartup_script():
     def execute_script(script_path):
@@ -145,9 +146,32 @@ def prompt_worker(q, server):
                 last_gc_collect = current_time
                 need_gc = False
 
+############### CHANGES ###############
 async def run(server, address='', port=8188, verbose=True, call_on_start=None):
-    await asyncio.gather(server.start(address, port, verbose, call_on_start), server.publish_loop())
+    await asyncio.gather(server.start(address, port, verbose, call_on_start), server.publish_loop(), reduce_storage())
 
+async def reduce_storage():
+    print("Running ComfyUI with custom storage reduction", flush=True)
+    while True:
+        await asyncio.sleep(600.0)
+
+        print("Remove old images...")
+        output_dir = folder_paths.get_output_directory()
+        keep_interval = 2 * 60 * 60.0
+
+        images = glob.glob(f"{output_dir}/**/*.png", recursive=True)
+
+        current_time = time.time()
+        for image in images:
+            try:
+                mtime = os.path.getmtime(image)
+
+                if current_time - mtime > keep_interval:
+                    os.unlink(image)
+            except Exception as e:
+                err_str = repr(e)
+                print(f"Error while removing file {image}: {err_str}")
+############### CHANGES ###############
 
 def hijack_progress(server):
     def hook(value, total, preview_image):
