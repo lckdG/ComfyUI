@@ -425,6 +425,21 @@ class PromptServer():
             if (node_class is not None) and (node_class in nodes.NODE_CLASS_MAPPINGS):
                 out[node_class] = node_info(node_class)
             return web.json_response(out)
+        
+############### CHANGES ###############
+        @routes.get("/version")
+        async def get_version(request):
+            try:
+                with open("build_time.txt", 'r') as f:
+                    version_str = f.readline()
+            except Exception as e:
+                err_str = repr(e)
+                print(err_str)
+        
+                version_str = "Failed to fetch"
+
+            return web.json_response({"data": version_str})
+############### CHANGES ###############
 
         @routes.get("/history")
         async def get_history(request):
